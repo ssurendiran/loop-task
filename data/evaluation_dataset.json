@@ -1,0 +1,115 @@
+{
+  "dataset_name": "fund_chatbot_evaluation",
+  "version": "1.0.0",
+  "description": "Evaluation dataset for fund chatbot with questions, expected answers, and ground truth",
+  "test_cases": [
+    {
+      "id": "test_001",
+      "question": "How many holdings are there for Garfield fund?",
+      "expected_answer_type": "count",
+      "expected_sql_pattern": "SELECT COUNT(*) FROM fund_holdings WHERE portfolioname ILIKE '%Garfield%'",
+      "ground_truth": "Should return a number > 0",
+      "category": "count_query",
+      "difficulty": "easy"
+    },
+    {
+      "id": "test_002",
+      "question": "Total number of trades for HoldCo 1",
+      "expected_answer_type": "count",
+      "expected_sql_pattern": "SELECT COUNT(*) FROM fund_trades WHERE portfolioname ILIKE '%HoldCo 1%'",
+      "ground_truth": "Should return a number > 0",
+      "category": "count_query",
+      "difficulty": "easy"
+    },
+    {
+      "id": "test_003",
+      "question": "Which funds have the best yearly P&L?",
+      "expected_answer_type": "list",
+      "expected_sql_pattern": "SELECT.*portfolioname.*SUM\\(plytd\\).*FROM fund_holdings.*GROUP BY.*ORDER BY.*DESC",
+      "ground_truth": "Should return list of funds with P&L values, ordered by highest P&L",
+      "category": "aggregation_query",
+      "difficulty": "medium"
+    },
+    {
+      "id": "test_004",
+      "question": "What is the total P&L for all funds?",
+      "expected_answer_type": "sum",
+      "expected_sql_pattern": "SELECT SUM\\(plytd\\).*FROM fund_holdings",
+      "ground_truth": "Should return sum of all yearly P&L values",
+      "category": "aggregation_query",
+      "difficulty": "easy"
+    },
+    {
+      "id": "test_005",
+      "question": "Show me all funds in holdings",
+      "expected_answer_type": "list",
+      "expected_sql_pattern": "SELECT.*portfolioname.*FROM fund_holdings.*DISTINCT",
+      "ground_truth": "Should return list of unique fund names",
+      "category": "list_query",
+      "difficulty": "easy"
+    },
+    {
+      "id": "test_006",
+      "question": "What is the average price for Garfield fund?",
+      "expected_answer_type": "average",
+      "expected_sql_pattern": "SELECT.*AVG\\(price\\).*FROM fund_holdings.*WHERE.*portfolioname.*ILIKE.*'%Garfield%'",
+      "ground_truth": "Should return average price as a number",
+      "category": "aggregation_query",
+      "difficulty": "medium"
+    },
+    {
+      "id": "test_007",
+      "question": "How many holdings for NonExistentFund?",
+      "expected_answer_type": "refusal",
+      "expected_sql_pattern": "SELECT COUNT\\(\\*\\).*FROM fund_holdings.*WHERE.*portfolioname.*ILIKE.*'%NonExistentFund%'",
+      "ground_truth": "Sorry can not find the answer",
+      "category": "refusal_test",
+      "difficulty": "easy"
+    },
+    {
+      "id": "test_008",
+      "question": "What is the weather today?",
+      "expected_answer_type": "refusal",
+      "expected_sql_pattern": null,
+      "ground_truth": "Sorry can not find the answer",
+      "category": "refusal_test",
+      "difficulty": "easy"
+    },
+    {
+      "id": "test_009",
+      "question": "List all trades for Northpoint 401K fund",
+      "expected_answer_type": "list",
+      "expected_sql_pattern": "SELECT.*FROM fund_trades.*WHERE.*portfolioname.*ILIKE.*'%Northpoint 401K%'",
+      "ground_truth": "Should return list of trades for Northpoint 401K",
+      "category": "filter_query",
+      "difficulty": "medium"
+    },
+    {
+      "id": "test_010",
+      "question": "What is the total market value for all holdings?",
+      "expected_answer_type": "sum",
+      "expected_sql_pattern": "SELECT.*SUM\\(mvbase\\).*FROM fund_holdings",
+      "ground_truth": "Should return sum of market values",
+      "category": "aggregation_query",
+      "difficulty": "medium"
+    },
+    {
+      "id": "test_011",
+      "question": "Which fund has the most holdings?",
+      "expected_answer_type": "list",
+      "expected_sql_pattern": "SELECT.*portfolioname.*COUNT\\(\\*\\).*FROM fund_holdings.*GROUP BY.*ORDER BY.*DESC.*LIMIT",
+      "ground_truth": "Should return fund name with highest count of holdings",
+      "category": "aggregation_query",
+      "difficulty": "hard"
+    },
+    {
+      "id": "test_012",
+      "question": "Show me the P&L for Garfield fund",
+      "expected_answer_type": "list",
+      "expected_sql_pattern": "SELECT.*plytd.*FROM fund_holdings.*WHERE.*portfolioname.*ILIKE.*'%Garfield%'",
+      "ground_truth": "Should return P&L values for Garfield fund",
+      "category": "filter_query",
+      "difficulty": "easy"
+    }
+  ]
+}
