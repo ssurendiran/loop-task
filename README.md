@@ -202,7 +202,7 @@ After running the first two notebooks, verify:
    - Test questions interactively
    - View generated SQL queries
    - Verify refusal behavior
-   - Includes 20 must-pass and 20 must-fail test cases
+   - Includes  must-pass and  must-fail test cases
    - Runs comprehensive evaluation with performance metrics
    - **Time:** ~5-10 minutes (includes test execution)
 
