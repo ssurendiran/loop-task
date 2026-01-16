@@ -2,7 +2,7 @@
 https://www.loom.com/share/6479b66f77ce4a5b835dcd691bc2b1df
 
 # loop-task
-RAG chatbot that answers fund holdings/trades & yearly PnL from provided CSVs, with strict "file-only" responses
+RAG chatbot that answers from provided CSVs, with strict "file-only" responses
 
 ## Project Structure
 
