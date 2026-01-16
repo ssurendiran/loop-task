@@ -263,5 +263,152 @@ If you need to start fresh and delete all existing data:
 - ✅ Prompt templates embedded in notebooks
 - ✅ Supports both example questions from requirements
 
+## Intent Classification Logic
+
+The chatbot uses a **strict, rule-first intent classification system** to ensure reliable, data-only responses. This section documents the exact logic used.
+
+### Step 0 — Closed-Domain Rule
+
+**If the question cannot be answered using columns from `holdings.csv` or `trades.csv`, return `CANNOT_ANSWER` → final response = "Sorry can not find the answer".**
+
+This is enforced even if the LLM "thinks" it knows the answer. The system only answers questions that can be answered from the available data columns.
+
+### Step 1 — Normalize Input
+
+1. **Lowercase the user question** (for keyword matching)
+2. **Remove extra punctuation** (for cleaner pattern matching)
+3. **Keep the raw question** for entity extraction (fund name extraction needs original case)
+
+### Step 2 — Extract Fund Name (Simple + Safe)
+
+Try to detect a portfolio/fund name by:
+
+1. **Exact match** against unique `PortfolioName` values from both files (case-insensitive)
+2. **If not found, try partial match** using `ILIKE %text%` pattern
+3. **If the intent requires a fund and no fund is found → `CANNOT_ANSWER`**
+
+Fund name extraction uses regex patterns to find fund names in various question formats:
+- "for/of/in/by FundName" → extracts name after preposition
+- "FundName fund/portfolio/account" → extracts name before keywords
+- "does/has FundName have" → extracts name between question words
+- Falls back to known fund names from `schema_info.json` if patterns fail
+
+### Step 3 — Rule-First Routing (Deterministic)
+
+We classify using keyword signals in this order:
+
+#### A) Count Questions
+
+**If question contains any count cues:**
+- **count cues**: `how many`, `count`, `number of`, `total number of`
+
+**Then:**
+- **If it contains trades cues → intent = `TRADES_COUNT`**
+  - **trades cues**: `trade`, `trades`, `transaction`, `buy`, `sell`, `counterparty`
+- **Else → intent = `HOLDINGS_COUNT`**
+  - **holdings cues**: `holding`, `holdings`, `position`, `positions`
+
+**Validation:**
+- Must have `fund_a` present
+- Fund must exist in the correct table (holdings for `HOLDINGS_COUNT`, trades for `TRADES_COUNT`)
+- If fund doesn't exist in correct table → `CANNOT_ANSWER`
+
+#### B) Performance / P&L Questions
+
+**If question contains any P&L/performance cues:**
+- **cues**: `p&l`, `profit`, `loss`, `performance`, `performed better`, `best fund`, `rank`
+
+**Then:**
+- **If it mentions two funds (fund_a + fund_b found) → `FUND_PL_COMPARE`**
+- **Else → `FUND_PL_RANK`**
+
+**Metric mapping for the interview task:**
+- **"yearly P&L" → use `PL_YTD`** (Year-to-date profit/loss)
+- **If user asks for a specific year** (e.g., 2021/2022) or a time-series trend → `CANNOT_ANSWER` (because the data doesn't contain yearly history)
+
+**Validation:**
+- For `FUND_PL_RANK`: Fund (if specified) must exist in holdings table (P&L only in holdings)
+- For `FUND_PL_COMPARE`: Both funds must exist in holdings table
+- Default metric is `plytd` (yearly) unless user specifies monthly/quarterly/daily
+
+#### C) Everything Else
+
+**If none of the above match confidently → `CANNOT_ANSWER`**
+
+The system uses a 2-layer classifier:
+- **Layer A**: Fast deterministic rule-based classification (handles most cases)
+- **Layer B**: LLM classifier for ambiguous cases (with strict Pydantic output)
+
+### Step 4 — SQL Mapping Per Intent (Only Safe SELECT)
+
+Each intent maps to a specific SQL query pattern:
+
+#### HOLDINGS_COUNT
+```sql
+SELECT COUNT(*) FROM fund_holdings WHERE portfolioname ILIKE '%fund_a%'
+```
+
+#### TRADES_COUNT
+```sql
+SELECT COUNT(*) FROM fund_trades WHERE portfolioname ILIKE '%fund_a%'
+```
+
+#### FUND_PL_RANK
+```sql
+SELECT portfolioname, SUM(plytd) AS total_pl 
+FROM fund_holdings 
+WHERE plytd IS NOT NULL 
+GROUP BY portfolioname 
+ORDER BY total_pl DESC 
+LIMIT 5
+```
+
+#### FUND_PL_COMPARE
+```sql
+SELECT portfolioname, SUM(plytd) AS total_pl 
+FROM fund_holdings 
+WHERE portfolioname ILIKE '%fund_a%' OR portfolioname ILIKE '%fund_b%'
+GROUP BY portfolioname
+```
+
+**Safety Rules:**
+- Only `SELECT` queries allowed (read-only)
+- Dangerous keywords blocked: `DROP`, `DELETE`, `UPDATE`, `INSERT`, `ALTER`, `CREATE`, `TRUNCATE`
+- Uses exact database column names (lowercase, no underscores for P&L: `plytd`, not `pl_ytd`)
+
+### Step 5 — Final "Answerability Gate"
+
+After SQL execution:
+
+1. **If query returns 0 rows OR missing required columns → return "Sorry can not find the answer"**
+2. **Otherwise compose answer strictly from query result**
+
+This gate prevents false positives like:
+- Asking trades count for a fund that only exists in holdings (or vice-versa)
+- Asking for P&L for a fund that doesn't exist in holdings
+- Any query that returns empty results
+
+**Special handling:**
+- For COUNT queries: `0` is a valid answer (fund exists but has 0 items)
+- For non-COUNT queries: `0` or `NULL` → treated as not found
+
+### Interview Note (Minimal by Design)
+
+**Note (Interview Scope):**
+
+For this interview task, the intent set is intentionally minimal and aligned to the required question types (holdings count, trades count, yearly P&L ranking/compare). In a full product version, this layer would expand by adding new intents only when new supported question patterns and/or new columns are introduced. Until then, out-of-scope requests are routed to `CANNOT_ANSWER` to guarantee data-only responses and avoid hallucination.
+
+### Allowed Intents (Strict Contract)
+
+The system only supports these 4 intent types:
+
+1. **`HOLDINGS_COUNT`** → "How many holdings does Fund X have?"
+2. **`TRADES_COUNT`** → "How many trades for Fund X?"
+3. **`FUND_PL_RANK`** → "Which fund performed best?" (rank funds by PL_YTD)
+4. **`FUND_PL_COMPARE`** → "Compare Fund A vs Fund B by PL_YTD"
+5. **`CANNOT_ANSWER`** → anything outside supported columns / unclear / missing fund
+
+All other questions return `CANNOT_ANSWER` with the refusal message: "Sorry can not find the answer".
+
 
 
