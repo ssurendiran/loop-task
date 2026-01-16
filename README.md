@@ -583,9 +583,7 @@ This gate prevents false positives like:
 
 For this interview task, the intent set is intentionally minimal and aligned to the required question types (holdings count, trades count, yearly P&L ranking/compare). In a full product version, this layer would expand by adding new intents only when new supported question patterns and/or new columns are introduced. Until then, out-of-scope requests are routed to `CANNOT_ANSWER` to guarantee data-only responses and avoid hallucination.
 
-### Allowed Intents (Strict Contract)
-
-The system only supports these 4 intent types:
+The system supports 4 allowed intents (plus `CANNOT_ANSWER` for refusals):
 
 1. **`HOLDINGS_COUNT`** → "How many holdings does Fund X have?"
 2. **`TRADES_COUNT`** → "How many trades for Fund X?"
@@ -593,7 +591,6 @@ The system only supports these 4 intent types:
 4. **`FUND_PL_COMPARE`** → "Compare Fund A vs Fund B by PL_YTD"
 5. **`CANNOT_ANSWER`** → anything outside supported columns / unclear / missing fund
 
-All other questions return `CANNOT_ANSWER` with the refusal message: "Sorry can not find the answer".
-
+All questions outside the 4 allowed intents return `CANNOT_ANSWER` with the refusal message: "Sorry can not find the answer".
 
 
