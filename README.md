@@ -579,7 +579,7 @@ This gate prevents false positives like:
 
 ### Interview Note (Minimal by Design)
 
-**Note (Interview Scope):**
+** ⚠️ Note (Interview Scope):**
 
 For this interview task, the intent set is intentionally minimal and aligned to the required question types (holdings count, trades count, yearly P&L ranking/compare). In a full product version, this layer would expand by adding new intents only when new supported question patterns and/or new columns are introduced. Until then, out-of-scope requests are routed to `CANNOT_ANSWER` to guarantee data-only responses and avoid hallucination.
 
