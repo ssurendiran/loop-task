@@ -264,5 +264,4 @@ If you need to start fresh and delete all existing data:
 - ✅ Supports both example questions from requirements
 
 
-##DEMO URL
 
