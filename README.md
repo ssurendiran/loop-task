@@ -593,4 +593,57 @@ The system supports 4 allowed intents (plus `CANNOT_ANSWER` for refusals):
 
 All questions outside the 4 allowed intents return `CANNOT_ANSWER` with the refusal message: "Sorry can not find the answer".
 
+Why I used direct function calls instead of LangGraph ToolNode / LLM tool-calling
 
+This project is a closed-domain, data-grounded chatbot. The key requirement is:
+answer only from the provided CSV data and return “Sorry can not find the answer” when the data doesn’t contain the answer.
+
+Because of that, I intentionally did not rely on LLM tool-calling (ToolNode / function-calling) for critical steps like database querying.
+
+✅ What I did instead
+
+I used deterministic Python functions inside LangGraph nodes for:
+
+Running the SQL safety gate (SELECT-only, whitelist tables/columns)
+
+Executing SQL against the database
+
+Validating empty results → returning the required refusal message
+
+✅ Why this is better for this interview task
+
+Predictability & control
+
+Tool-calling depends on the LLM choosing the correct tool and arguments.
+
+For this task, I want guaranteed behavior: if intent is allowed → run SQL, else → refuse.
+
+Lower risk of hallucination / scope creep
+
+With tool-calling, the model can try unexpected tools or generate invalid calls.
+
+Direct function calls keep the system strictly bound to the CSV-derived database.
+
+Easier to audit and secure
+
+Safety rules are enforced in code before execution.
+
+The SQL executor is not “optional”—it runs only in the allowed path.
+
+Simpler architecture for an MVP
+
+This was built under a 24-hour constraint.
+
+Direct calls reduce complexity while keeping the workflow clear and testable.
+
+When ToolNode would make sense (future enhancement)
+
+If this was expanded into a broader assistant (multiple tools, optional actions), then I would:
+
+Bind tools to the LLM (llm.bind_tools(...))
+
+Use ToolNode(tools)
+
+Route with tools_condition
+
+But for this closed-domain SQL chatbot, deterministic execution is the safest and most reliable design.
