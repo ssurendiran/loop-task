@@ -1,3 +1,6 @@
+##DEMO URL
+https://www.loom.com/share/6479b66f77ce4a5b835dcd691bc2b1df
+
 # loop-task
 RAG chatbot that answers fund holdings/trades & yearly PnL from provided CSVs, with strict "file-only" responses
 
@@ -259,3 +262,7 @@ If you need to start fresh and delete all existing data:
 - ✅ Exact refusal message: "Sorry can not find the answer"
 - ✅ Prompt templates embedded in notebooks
 - ✅ Supports both example questions from requirements
+
+
+##DEMO URL
+
