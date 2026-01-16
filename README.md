@@ -593,7 +593,7 @@ The system supports 4 allowed intents (plus `CANNOT_ANSWER` for refusals):
 
 All questions outside the 4 allowed intents return `CANNOT_ANSWER` with the refusal message: "Sorry can not find the answer".
 
-** ❗️ Why I used direct function calls instead of LangGraph ToolNode / LLM tool-calling **
+### ❗️ Why I used direct function calls instead of LangGraph ToolNode / LLM tool-calling 
 
 This project is a closed-domain, data-grounded chatbot. The key requirement is:
 answer only from the provided CSV data and return “Sorry can not find the answer” when the data doesn’t contain the answer.
